@@ -1,0 +1,32 @@
+Welcome to DefaultWiki's FrontPage, this page will show itself on the `/` root of your web server.
+
+## Here is a table
+
+Header 1 | Header 2 | Header 3
+---|---|---|
+This is some wild data | maybe I should include more here | oh well
+
+## Code Blocks
+
+Code Highlighting is provided by Prism.js
+
+```go
+func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
+	m := validPath.FindStringSubmatch(r.URL.Path)
+	if m == nil {
+		http.NotFound(w, r)
+		return "", errors.New("Invalid Page Title")
+	}
+	return m[2], nil // The title is the second subexpression.
+}
+```
+
+## Markdown Editor
+
+It uses  [Ionaru's Easy Markdown Editor](https://github.com/Ionaru/easy-markdown-editor) to compose wiki pages in markdown.
+
+## Here is an Image
+
+A sexy one from Unsplash.com
+
+![](https://images.unsplash.com/photo-1531297484001-80022131f5a1?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2507&q=80)

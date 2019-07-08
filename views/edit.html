@@ -1,0 +1,46 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title>DefaultWiki - {{.Title}}</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="/assets/css/normalize.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+  <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+
+</head>
+
+<body>
+  <!--[if IE]>
+    <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+  <![endif]-->
+
+  <!-- Add your site or application content here -->
+  <div class="container">
+    <h1>Editing {{.Title}}</h1>
+
+    <form action="/save/{{.Title}}" method="POST">
+    <div><textarea id="MDEditor" name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea></div>
+    <div><input type="submit" value="Save"></div>
+    </form>
+  </div>
+
+
+  <script src="/assets/js/vendor/modernizr-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script>window.jQuery || document.write('<script src="/assets/js/vendor/jquery-3.4.1.min.js"><\/script>')</script>
+  <script src="/assets/js/custom/redirectnewpage.js"></script>
+  <script src="/assets/js/vendor/easymde.min.js"></script>
+  <script>
+    var easyMDE = new EasyMDE({element: document.getElementById('MDEditor')});
+  </script>
+</body>
+
+</html>

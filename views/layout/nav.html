@@ -1,0 +1,13 @@
+<nav>
+  <ul>
+    <li><a href="/">DefaultWiki</a></li>
+    <li><a href="#addpg-modal">Add Page</a></li>
+    <li class="dropdown pull-right">
+      <a href="javascript:void(0)" class="dropbtn">Manage Page</a>
+      <div class="dropdown-content">
+        <a href="/edit/{{.Title}}">Edit</a>
+        <a href="/delete/{{.Title}}">Delete</a>
+      </div>
+    </li>
+  </ul>
+</nav>
