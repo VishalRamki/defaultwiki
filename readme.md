@@ -4,6 +4,19 @@ Version: **0.5.0** - MVP
 
 A simple flat-file, markdown-based, lightweight wiki software, meant for simple private instances.
 
+## Development
+
+### Requires
+
+- go-rice
+
+### Building
+
+```bash
+rice embed-go
+go build
+```
+
 ## TODO: Build Instructions
 
 There are a bunch of stuff that still needs to get done before I actually release a build.
