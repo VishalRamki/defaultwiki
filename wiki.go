@@ -10,27 +10,91 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/microcosm-cc/bluemonday"
+	"github.com/BurntSushi/toml"
+	bluemonday "github.com/microcosm-cc/bluemonday"
 	"gitlab.com/golang-commonmark/markdown"
 )
 
 type Page struct {
-	Title string
-	Body  []byte
+	Title      string
+	Body       []byte
+	ParentPage string
 }
 
 type PageView struct {
-	Title string
-	Body  template.HTML
+	Title      string
+	Body       template.HTML
+	ParentPage string
+	System     Config
+	Pages      []string
 }
 
-var templates = template.Must(template.ParseFiles("views/edit.html", "views/view.html", "views/layout/nav.html", "views/layout/modals.html"))
-var validPath = regexp.MustCompile("^/(edit|save|view|delete)/([a-zA-Z0-9]+)$")
+type Config struct {
+	Name string
+}
+
+var templates = template.Must(template.ParseFiles("views/edit.html", "views/view.html", "views/admin.html", "views/pages.html", "views/layout/nav.html", "views/layout/modals.html"))
+var validPath = regexp.MustCompile(`/(edit|save|view|delete|default)/([a-zA-Z0-9\-]+)$`)
 var dataRoot = "data"
+
+func loadFile(path string) ([]byte, error) {
+	body, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func loadSettings() *Config {
+	data, err := loadFile("data/settings.toml")
+	if err != nil {
+		return &Config{}
+	}
+	var conf Config
+	if _, err := toml.Decode(string(data), &conf); err != nil {
+		return &Config{}
+	}
+	return &conf
+}
+
+var SystemSettings = loadSettings()
+
+func UpdateSettings(newData *Config) {
+	f, err := os.Create("data/settings.toml")
+	if err != nil {
+		// failed to create/open the file
+		log.Fatal(err)
+	}
+	if err := toml.NewEncoder(f).Encode(newData); err != nil {
+		// failed to encode
+		log.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		// failed to close the file
+		log.Fatal(err)
+	}
+	// reload from disk
+	SystemSettings = loadSettings()
+}
 
 func (p *Page) save() error {
 	filename := buildPath(p.Title + ".txt")
 	return ioutil.WriteFile(filename, p.Body, 0600)
+}
+
+func listPages() []string {
+	files, err := ioutil.ReadDir("./data")
+	if err != nil {
+		log.Fatal(err)
+	}
+	listnames := []string{}
+	for _, f := range files {
+		if f.Name() != "settings.toml" && f.Name() != "" {
+			name := strings.Split(f.Name(), ".")
+			listnames = append(listnames, name[0])
+		}
+	}
+	return listnames
 }
 
 func buildPath(filename string) string {
@@ -55,6 +119,25 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 	return m[2], nil // The title is the second subexpression.
 }
 
+func adminSettingsHandler(w http.ResponseWriter, r *http.Request, title string) {
+	if r.Method == http.MethodPost {
+		// save data
+		if title == "admin" {
+			name := r.FormValue("Name")
+			UpdateSettings(&Config{Name: name})
+		}
+		http.Redirect(w, r, "/default/"+title, http.StatusFound)
+	} else {
+		pages := make([]string, 1)
+		if title == "pages" {
+			pages = listPages()
+		}
+		pg := &PageView{Title: "Administration", Body: "", System: *SystemSettings, Pages: pages}
+		renderTemplateC(w, title, pg)
+	}
+
+}
+
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p, err := loadPage(title)
 	if err != nil {
@@ -74,7 +157,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	px := bluemonday.UGCPolicy()
 	px.AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code")
 	p.Body = px.SanitizeBytes([]byte(parsedString))
-	pg := &PageView{Title: p.Title, Body: template.HTML(p.Body)}
+	pg := &PageView{Title: p.Title, Body: template.HTML(p.Body), System: *SystemSettings}
 	renderTemplateC(w, "view", pg)
 }
 
@@ -132,11 +215,13 @@ func renderTemplateC(w http.ResponseWriter, tmpl string, p *PageView) {
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("URL Path Requested: %s", r.URL.Path)
 		if r.URL.Path == "/" {
 			http.Redirect(w, r, "/view/FrontPage", http.StatusFound)
 			return
 		}
 		m := validPath.FindStringSubmatch(r.URL.Path)
+		log.Printf("Requested: %s", m)
 		if m == nil {
 			http.NotFound(w, r)
 			return
@@ -153,6 +238,10 @@ func main() {
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.HandleFunc("/delete/", makeHandler(deleteHandler))
+
+	http.HandleFunc("/default/", makeHandler(adminSettingsHandler))
+
+	log.Printf("DefaultWiki listening on Port: %s", "1789")
 
 	log.Fatal(http.ListenAndServe(":1789", nil))
 }

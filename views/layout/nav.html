@@ -1,10 +1,17 @@
 <nav>
   <ul>
-    <li><a href="/">DefaultWiki</a></li>
+    <li class="dropdown pull-right">
+      <a href="/" class="dropbtn">{{.System.Name}}</a>
+      <div class="dropdown-content">
+        <a href="/default/admin">Settings</a>
+      </div>
+    </li>
     <li><a href="#addpg-modal">Add Page</a></li>
+    <li><a href="/default/pages">Pages</a></li>
     <li class="dropdown pull-right">
       <a href="javascript:void(0)" class="dropbtn">Manage Page</a>
       <div class="dropdown-content">
+        <!-- <a href="#addchildpg-modal">Add Child Page</a> doesn't work properly -->
         <a href="/edit/{{.Title}}">Edit</a>
         <a href="/delete/{{.Title}}">Delete</a>
       </div>

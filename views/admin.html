@@ -1,6 +1,5 @@
 
 
-
 <!doctype html>
 <html class="no-js" lang="">
 
@@ -13,7 +12,8 @@
   <link rel="stylesheet" href="/assets/css/normalize.css">
   <link rel="stylesheet" href="/assets/css/main.css">
   <link rel="stylesheet" href="/assets/css/custom.css">
-  <link rel="stylesheet" href="/assets/css/vendor/easymde/easymde.min.css">
+  <link rel="stylesheet" href="/assets/css/lib/navbar.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/themes/prism.css" rel="stylesheet" />
 
 </head>
 
@@ -22,25 +22,34 @@
     <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
   <![endif]-->
 
+  <header>
+    {{template "nav.html" .}}
+  </header>
+
   <!-- Add your site or application content here -->
   <div class="container">
-    <h1>Editing {{.Title}}</h1>
-
-    <form action="/save/{{.Title}}" method="POST">
-    <div><textarea id="MDEditor" name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea></div>
-    <div><input type="submit" value="Save"><input type="button" onclick="javascript:window.location='/view/{{.Title}}';" value="Cancel"></div>
+    <form action="/default/admin" method="POST">
+        <div>
+            <span>Site Name</span><br />
+            <input type="text" value="{{.System.Name}}" name="Name" />
+        </div>
+        <div><input type="submit" value="Save"><input type="button" onclick="javascript:window.location='/';" value="Cancel"></div>
     </form>
   </div>
 
 
   <script src="/assets/js/vendor/modernizr-3.7.1.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="/assets/js/lib/navbar.js"></script>
   <script>window.jQuery || document.write('<script src="/assets/js/vendor/jquery-3.4.1.min.js"><\/script>')</script>
   <script src="/assets/js/custom/redirectnewpage.js"></script>
-  <script src="/assets/js/vendor/easymde.min.js"></script>
-  <script>
-    var easyMDE = new EasyMDE({element: document.getElementById('MDEditor')});
-  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script>Prism.plugins.autoloader.languages_path = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/'</script>
+
+  {{template "modals.html" .}}
+
 </body>
 
 </html>
