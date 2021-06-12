@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	rice "github.com/GeertJohan/go.rice"
 	bluemonday "github.com/microcosm-cc/bluemonday"
 	"gitlab.com/golang-commonmark/markdown"
 )
@@ -36,6 +37,7 @@ type Config struct {
 var templates = template.Must(template.ParseFiles("views/edit.html", "views/view.html", "views/admin.html", "views/pages.html", "views/layout/nav.html", "views/layout/modals.html"))
 var validPath = regexp.MustCompile(`/(edit|save|view|delete|default)/([a-zA-Z0-9\-]+)$`)
 var dataRoot = "data"
+var bundledAssets, _ = rice.FindBox("views")
 
 func loadFile(path string) ([]byte, error) {
 	body, err := ioutil.ReadFile(path)
@@ -200,14 +202,56 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+
+	// get file contents as string
+	templateString, err := bundledAssets.String(tmpl + ".html")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// parse and execute the template
+	tmplMessage, err := template.New(tmpl).Parse(templateString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = tmplMessage.Execute(w, p)
+	//err = templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
+func buildRenderTemplate(baseTmpl string) *template.Template {
+	tmpl := template.New(baseTmpl)
+
+	// get the bundled partials;
+	navString, _ := bundledAssets.String("layout/nav.html")
+	modalString, _ := bundledAssets.String("layout/modals.html")
+
+	// now parse it into the basetemplate;
+	// TODO: we should try to do this automatically, ie. all the files in the
+	// layout folder should be considered partials or some shit.
+	tmpl, _ = tmpl.Parse(modalString)
+	tmpl, _ = tmpl.Parse(navString)
+
+	return tmpl
+}
+
 func renderTemplateC(w http.ResponseWriter, tmpl string, p *PageView) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+	// get file contents as string
+	templateString, err := bundledAssets.String(tmpl + ".html")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// parse and execute the template
+	tmplMessage := buildRenderTemplate(tmpl)
+	tmplMessage, _ = tmplMessage.Parse(templateString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = tmplMessage.Execute(w, p)
+	//err = templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -232,7 +276,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 
 func main() {
 	http.HandleFunc("/", makeHandler(viewHandler))
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("static"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(rice.MustFindBox("static").HTTPBox())))
 
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))

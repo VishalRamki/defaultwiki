@@ -19,6 +19,13 @@ A simple flat-file, markdown-based, lightweight wiki software, meant for simple 
 ![](git-assets/defaultwiki-add-newpage.png)
 ![](git-assets/admin-list-pages.png)
 
+## Development
+
+```shell
+rice embed-go
+go build
+```
+
 ## TODO: Build Instructions
 
 There are a bunch of stuff that still needs to get done before I actually release a build.
